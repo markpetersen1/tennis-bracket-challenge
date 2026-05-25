@@ -180,7 +180,7 @@
     <!-- Results refresh bar -->
     <div class="results-bar">
       <div>
-        <div class="status"><strong>Auto-Results:</strong> Click to fetch current round winners using AI web search. Updates scores automatically.</div>
+        <div class="status"><strong>Live Results:</strong> Fetches real match results from api-tennis.com and updates scores automatically. Player matching is fuzzy (last-name based), so "Jannik Sinner" matches "Sinner J." etc.</div>
         <div id="refresh-log"></div>
       </div>
       <div style="display:flex;gap:0.5rem;flex-direction:column;align-items:flex-end">
@@ -247,6 +247,13 @@ const ROUNDS = [
 ];
 const JSONBIN_BASE = 'https://api.jsonbin.io/v3';
 const BIN_NAME = 'rg2026-bracket-tracker';
+
+// api-tennis.com integration — single-user hardcoded key
+// ⚠️ Rotate this key at api-tennis.com after adding it here, since it lives in source.
+const API_TENNIS_KEY = '58bf9b99cb09db712f794c82d3e2ee957451f2571421e34dcb9fa5e0415cb4fc';
+const API_TENNIS_BASE = 'https://api.api-tennis.com/tennis/';
+// Cache the Roland Garros 2026 tournament key once we discover it
+let RG_TOURNAMENT_KEY = localStorage.getItem('rg2026_tournament_key') || null;
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
 let state = {
@@ -349,78 +356,224 @@ function setSyncStatus(msg) {
   if (el) el.textContent = msg;
 }
 
-// ─── AI RESULTS FETCH ────────────────────────────────────────────────────────
-async function fetchResults(draw) {
-  const log = document.getElementById('refresh-log');
-  log.textContent = `Fetching ${draw.toUpperCase()} results via AI...`;
+// ─── API-TENNIS.COM RESULTS FETCH ────────────────────────────────────────────
+// Round names that api-tennis.com uses → our internal round keys
+// (Best guess based on common conventions; logged & corrected on first run)
+const ROUND_NAME_MAP = {
+  'first round': 'r64',
+  'round of 128': 'r64',
+  '1st round': 'r64',
+  'round 1': 'r64',
+  'second round': 'r32',
+  'round of 64': 'r32',
+  '2nd round': 'r32',
+  'round 2': 'r32',
+  'third round': 'r16',
+  'round of 32': 'r16',
+  '3rd round': 'r16',
+  'round 3': 'r16',
+  'fourth round': 'r8',
+  'round of 16': 'r8',
+  '4th round': 'r8',
+  'round 4': 'r8',
+  'quarter-finals': 'qf',
+  'quarterfinals': 'qf',
+  'quarter finals': 'qf',
+  'quarterfinal': 'qf',
+  'semi-finals': 'sf',
+  'semifinals': 'sf',
+  'semi finals': 'sf',
+  'semifinal': 'sf',
+  'final': 'final',
+  'finals': 'final',
+};
 
-  const drawLabel = draw === 'atp' ? "men's singles ATP" : "women's singles WTA";
-  const prompt = `You are a sports data assistant. Search the web for the current Roland Garros 2026 ${drawLabel} results.
-
-For each round that has been completed or is in progress, list the winners (players who advanced).
-Use the EXACT player name format matching how they appear on the Served bracket challenge site (e.g. "Jannik Sinner", "Coco Gauff").
-
-Return ONLY a JSON object, no markdown, no explanation. Format:
-{
-  "r64": ["Winner1", "Winner2", ...],
-  "r32": ["Winner1", ...],
-  "r16": ["Winner1", ...],
-  "r8": ["Winner1", ...],
-  "qf": ["Winner1", ...],
-  "sf": ["Winner1", ...],
-  "final": ["Champion"]
+function normalizeRoundName(raw) {
+  if (!raw) return null;
+  const k = String(raw).toLowerCase().trim();
+  return ROUND_NAME_MAP[k] || null;
 }
 
-Only include rounds that have completed matches. Use empty arrays [] for rounds not yet played.`;
+// Pull last name out of "Jannik Sinner" or "J. Sinner" or "Sinner J." → "sinner"
+function lastNameKey(fullName) {
+  if (!fullName) return '';
+  let s = String(fullName).trim().toLowerCase().replace(/[.,]/g, '');
+  // "Sinner J" pattern (last-first)
+  const parts = s.split(/\s+/);
+  if (parts.length >= 2) {
+    // Heuristic: single-letter token = initial; the OTHER part is last name
+    const hasInitialAtEnd = parts[parts.length-1].length === 1;
+    const hasInitialAtStart = parts[0].length === 1;
+    if (hasInitialAtEnd && !hasInitialAtStart) return parts[0]; // "Sinner J" → sinner
+    if (hasInitialAtStart && !hasInitialAtEnd) return parts[parts.length-1]; // "J Sinner" → sinner
+    return parts[parts.length-1]; // "Jannik Sinner" → sinner
+  }
+  return s;
+}
+
+// Find RG 2026 tournament key by listing all tournaments
+async function discoverRolandGarrosKey(log) {
+  if (RG_TOURNAMENT_KEY) {
+    log(`Using cached tournament key: ${RG_TOURNAMENT_KEY}`);
+    return RG_TOURNAMENT_KEY;
+  }
+  log('Discovering Roland Garros 2026 tournament key...');
+  const url = `${API_TENNIS_BASE}?method=get_tournaments&APIkey=${API_TENNIS_KEY}`;
+  const r = await fetch(url);
+  const d = await r.json();
+  if (!d.result || !Array.isArray(d.result)) {
+    throw new Error('Unexpected tournaments response: ' + JSON.stringify(d).slice(0,200));
+  }
+  // Look for Roland Garros / French Open
+  const candidates = d.result.filter(t => {
+    const name = (t.tournament_name || '').toLowerCase();
+    return name.includes('roland') || name.includes('french open');
+  });
+  log(`Found ${candidates.length} matching tournaments: ${candidates.map(c=>c.tournament_name).join(', ')}`);
+  if (!candidates.length) throw new Error('Roland Garros not found in tournament list');
+  // Prefer one with "2026" or take the first
+  const match = candidates.find(c => (c.tournament_name||'').includes('2026')) || candidates[0];
+  RG_TOURNAMENT_KEY = match.tournament_key;
+  localStorage.setItem('rg2026_tournament_key', RG_TOURNAMENT_KEY);
+  log(`Using tournament key: ${RG_TOURNAMENT_KEY} (${match.tournament_name})`);
+  return RG_TOURNAMENT_KEY;
+}
+
+async function fetchResults(draw) {
+  const logEl = document.getElementById('refresh-log');
+  const lines = [];
+  const log = (msg) => {
+    lines.push(msg);
+    logEl.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
+  };
+  log(`Fetching ${draw.toUpperCase()} results from api-tennis.com...`);
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
+    const tKey = await discoverRolandGarrosKey(log);
 
-    const data = await response.json();
+    // Date range: tournament runs May 24 – June 7, 2026
+    const dateFrom = '2026-05-24';
+    const dateTo = '2026-06-07';
+    const url = `${API_TENNIS_BASE}?method=get_fixtures&APIkey=${API_TENNIS_KEY}&tournament_key=${tKey}&date_start=${dateFrom}&date_stop=${dateTo}`;
+    log(`Fetching fixtures...`);
+    const r = await fetch(url);
+    const d = await r.json();
 
-    let text = '';
-    if (data.content) {
-      for (const block of data.content) {
-        if (block.type === 'text') text += block.text;
-      }
+    if (!d.result || !Array.isArray(d.result)) {
+      throw new Error('Unexpected fixtures response. Raw: ' + JSON.stringify(d).slice(0,300));
     }
 
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('No JSON found in response');
-    const results = JSON.parse(jsonMatch[0]);
+    log(`Received ${d.result.length} total fixtures`);
 
-    ROUNDS.forEach(r => {
-      if (results[r.key] && results[r.key].length > 0) {
-        state.results[draw][r.key] = results[r.key];
+    // Filter by draw type (event_type_type === 'Atp Singles' / 'Wta Singles' is common,
+    // but field names vary. Log a sample and try multiple heuristics.)
+    if (d.result.length > 0) {
+      const sample = d.result[0];
+      console.log('Sample fixture from api-tennis.com:', sample);
+      log(`Sample fields: ${Object.keys(sample).slice(0,12).join(', ')}`);
+    }
+
+    const drawLabel = draw === 'atp' ? 'atp' : 'wta';
+    // Try several common field names for the event/tour type
+    const matches = d.result.filter(m => {
+      const eventType = ((m.event_type_type || m.tournament_type || m.event_type || '') + '').toLowerCase();
+      const tName = ((m.tournament_name || '') + '').toLowerCase();
+      // Match if event type mentions ATP/WTA OR if it's a singles event with men/women
+      if (eventType.includes(drawLabel)) return true;
+      // Fallback: filter by singles + gender hints in tournament name
+      if (drawLabel === 'atp' && (eventType.includes('men') || tName.includes("men's"))) return true;
+      if (drawLabel === 'wta' && (eventType.includes('women') || tName.includes("women's"))) return true;
+      return false;
+    });
+
+    log(`${matches.length} matches matched ${draw.toUpperCase()} filter`);
+
+    // Group winners by round
+    const winnersByRound = { r64:[], r32:[], r16:[], r8:[], qf:[], sf:[], final:[] };
+    let unmatchedRounds = new Set();
+    let completed = 0;
+
+    matches.forEach(m => {
+      const status = ((m.event_status || m.event_final_result || '') + '').toLowerCase();
+      const isFinished = status.includes('finished') || status.includes('ended') || !!m.event_winner;
+      if (!isFinished) return;
+
+      const roundRaw = m.tournament_round || m.round || m.event_round || '';
+      const roundKey = normalizeRoundName(roundRaw);
+      if (!roundKey) {
+        unmatchedRounds.add(roundRaw);
+        return;
+      }
+
+      // event_winner is typically "First Player" / "Second Player" indicating which side won
+      // Player names usually in event_first_player / event_second_player
+      let winnerName = '';
+      const winnerSide = (m.event_winner || '').toLowerCase();
+      if (winnerSide.includes('first') || winnerSide === 'home') {
+        winnerName = m.event_first_player || m.event_home_team || m.first_player || '';
+      } else if (winnerSide.includes('second') || winnerSide === 'away') {
+        winnerName = m.event_second_player || m.event_away_team || m.second_player || '';
+      } else if (m.event_winner && !winnerSide.includes('first') && !winnerSide.includes('second')) {
+        // Sometimes event_winner is the name directly
+        winnerName = m.event_winner;
+      }
+
+      if (winnerName) {
+        winnersByRound[roundKey].push(winnerName.trim());
+        completed++;
       }
     });
 
-    const total = ROUNDS.reduce((sum, r) => sum + (state.results[draw][r.key]||[]).filter(x=>x).length, 0);
+    if (unmatchedRounds.size > 0) {
+      log(`⚠ Unrecognized round names (need mapping): ${[...unmatchedRounds].join(', ')}`);
+    }
+
+    // Merge into state — only overwrite a round if we have new data
+    ROUNDS.forEach(r => {
+      if (winnersByRound[r.key].length > 0) {
+        state.results[draw][r.key] = winnersByRound[r.key];
+        log(`  ${r.label}: ${winnersByRound[r.key].length} winners`);
+      }
+    });
+
+    if (completed === 0) {
+      log('⚠ No completed matches parsed. Open browser console (F12) to see the sample fixture object and report field names.');
+    } else {
+      log(`✓ Loaded ${completed} winners across rounds`);
+    }
+
     const timestamp = new Date().toLocaleTimeString();
-    log.textContent = `✓ ${draw.toUpperCase()} updated at ${timestamp} — ${total} match results loaded`;
     document.getElementById('last-fetched').textContent = `Last fetched: ${timestamp}`;
     state.lastFetched = new Date().toISOString();
-
     localStorage.setItem('rg2026_state', JSON.stringify(state));
     if (jsonbinKey && binId) await pushToJsonBin();
     renderAll();
-    showToast(`${draw.toUpperCase()} results updated!`);
+    showToast(`${draw.toUpperCase()} updated: ${completed} winners`);
   } catch(e) {
-    log.textContent = `✗ Error fetching results: ${e.message}. Try again or check console.`;
-    console.error(e);
+    log(`✗ Error: ${e.message}`);
+    console.error('Full error:', e);
   }
 }
 
 // ─── SCORING ─────────────────────────────────────────────────────────────────
+// Match a user-entered pick against the actual winners list using last-name matching
+// so "Jannik Sinner" matches "Sinner J." or "J. Sinner"
+function pickMatchesAnyWinner(pick, winners) {
+  if (!pick || !winners || !winners.length) return false;
+  const pickKey = lastNameKey(pick);
+  if (!pickKey) return false;
+  // First try exact lowercase match
+  const pLower = pick.toLowerCase().trim();
+  for (const w of winners) {
+    if (w.toLowerCase().trim() === pLower) return true;
+  }
+  // Then last-name fuzzy match
+  for (const w of winners) {
+    if (lastNameKey(w) === pickKey) return true;
+  }
+  return false;
+}
+
 function calcPoints(playerName, draw) {
   const picks = (state.picks[playerName]||{})[draw]||{};
   const results = state.results[draw]||{};
@@ -428,9 +581,9 @@ function calcPoints(playerName, draw) {
   const byRound = {};
   ROUNDS.forEach(r => {
     const myPicks = picks[r.key]||[];
-    const actual = (results[r.key]||[]).map(a=>a.toLowerCase().trim());
+    const actual = results[r.key]||[];
     let pts = 0;
-    myPicks.forEach(p => { if (p && actual.includes(p.toLowerCase().trim())) pts += r.pts; });
+    myPicks.forEach(p => { if (pickMatchesAnyWinner(p, actual)) pts += r.pts; });
     byRound[r.key] = pts;
     total += pts;
   });
@@ -479,14 +632,14 @@ function renderBrackets() {
   const results = state.results[currentDraw]||{};
   let html = '';
   ROUNDS.forEach(r => {
-    const actual = (results[r.key]||[]).map(a=>a.toLowerCase().trim());
+    const actual = results[r.key]||[];
     let cards = '';
     for (let i=0; i<r.slots; i++) {
       const actualWinner = (results[r.key]||[])[i]||'';
       const badges = state.players.map(p => {
         const pick = ((state.picks[p.name]||{})[currentDraw]||{})[r.key]?.[i]||'';
         let status = 'pending';
-        if (pick && actual.length>0) status = actual.includes(pick.toLowerCase().trim()) ? 'correct' : 'wrong';
+        if (pick && actual.length>0) status = pickMatchesAnyWinner(pick, actual) ? 'correct' : 'wrong';
         return `<span class="pick-badge ${status}"><span class="badge-dot" style="background:${p.color}"></span>${pick||'—'}</span>`;
       }).join('');
       cards += `
@@ -526,11 +679,11 @@ function renderEntryGrid() {
   grid.innerHTML = state.players.map(p => {
     const picks = (state.picks[p.name]||{})[currentEntryDraw]||{};
     const rounds = ROUNDS.map(r => {
-      const actual = (results[r.key]||[]).map(a=>a.toLowerCase().trim());
+      const actual = results[r.key]||[];
       const inputs = Array.from({length:r.slots},(_,i) => {
         const val = picks[r.key]?.[i]||'';
         let st = 'pending';
-        if (val && actual.length>0) st = actual.includes(val.toLowerCase().trim()) ? 'correct' : 'wrong';
+        if (val && actual.length>0) st = pickMatchesAnyWinner(val, actual) ? 'correct' : 'wrong';
         return `<div class="pick-input-row"><span class="pick-status ${st}"></span><input type="text" data-player="${p.name}" data-draw="${currentEntryDraw}" data-round="${r.key}" data-idx="${i}" value="${val.replace(/"/g,'&quot;')}" placeholder="Player name" autocomplete="off"></div>`;
       }).join('');
       return `<div class="round-entry-group"><div class="round-entry-label">${r.label} — ${r.pts}pts × ${r.slots}</div><div class="picks-inputs">${inputs}</div></div>`;
