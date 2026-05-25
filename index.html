@@ -42,12 +42,7 @@
 
   /* PLAYERS ROW */
   .section-label { font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-light); margin-bottom: 0.7rem; font-weight: 500; }
-  .players-row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1.8rem; align-items: center; }
-  .player-chip { display: flex; align-items: center; gap: 0.45rem; background: var(--white); border: 2px solid var(--line); border-radius: 2px; padding: 0.35rem 0.65rem; font-size: 0.72rem; }
   .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
-  .remove-btn { background: none; border: none; cursor: pointer; color: var(--text-light); font-size: 1rem; line-height: 1; padding: 0 2px; }
-  .remove-btn:hover { color: var(--clay); }
-  .add-player-form { display: flex; gap: 0.4rem; align-items: center; }
 
   /* INPUTS / BUTTONS */
   input[type="text"] { font-family: 'DM Mono', monospace; font-size: 0.75rem; padding: 0.4rem 0.7rem; border: 2px solid var(--line); background: var(--white); color: var(--text-dark); border-radius: 2px; outline: none; transition: border-color 0.2s; }
@@ -166,15 +161,6 @@
 
 <main>
 
-  <!-- PLAYERS ROW -->
-  <div class="section-label">Group Members</div>
-  <div class="players-row" id="players-row">
-    <div class="add-player-form">
-      <input type="text" id="new-player-input" placeholder="bracket username" maxlength="30" style="width:160px" onkeydown="if(event.key==='Enter')addPlayer()">
-      <button class="btn btn-primary btn-sm" onclick="addPlayer()">+ Add</button>
-    </div>
-  </div>
-
   <!-- LEADERBOARD -->
   <div class="view active" id="view-leaderboard">
     <!-- Results refresh bar -->
@@ -236,6 +222,10 @@
 <script>
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 const COLORS = ['#C4622D','#2D6B3C','#4A7FB5','#9B59B6','#E67E22','#1ABC9C','#E74C3C','#3498DB','#F39C12','#16A085'];
+const PLAYERS = [
+  { name: 'sunchine', color: COLORS[0] },
+  { name: 'meelz',    color: COLORS[1] },
+];
 const ROUNDS = [
   { key:'r64',   label:'Round of 128→64',  slots:64, pts:10  },
   { key:'r32',   label:'Round of 64→32',   slots:32, pts:20  },
@@ -257,7 +247,7 @@ let RG_TOURNAMENT_KEY = localStorage.getItem('rg2026_tournament_key') || null;
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
 let state = {
-  players: [],
+  players: PLAYERS,
   picks: {},
   results: {
     atp: { r64:[],r32:[],r16:[],r8:[],qf:[],sf:[],final:[] },
@@ -320,6 +310,7 @@ async function pullFromJsonBin() {
     const d = await r.json();
     if (d.record) {
       state = d.record;
+      state.players = PLAYERS;
       if (!state.results) state.results = { atp:{r64:[],r32:[],r16:[],r8:[],qf:[],sf:[],final:[]}, wta:{r64:[],r32:[],r16:[],r8:[],qf:[],sf:[],final:[]} };
       localStorage.setItem('rg2026_state', JSON.stringify(state));
       return true;
@@ -710,37 +701,6 @@ function collectEntryInputs() {
   });
 }
 
-// ─── PLAYERS ─────────────────────────────────────────────────────────────────
-function addPlayer() {
-  const inp = document.getElementById('new-player-input');
-  const name = inp.value.trim();
-  if (!name) return;
-  if (state.players.find(p=>p.name.toLowerCase()===name.toLowerCase())) { showToast('Already added!'); return; }
-  const color = COLORS[state.players.length % COLORS.length];
-  state.players.push({name, color});
-  if (!state.picks[name]) state.picks[name] = {atp:{r64:[],r32:[],r16:[],r8:[],qf:[],sf:[],final:[]},wta:{r64:[],r32:[],r16:[],r8:[],qf:[],sf:[],final:[]}};
-  inp.value = '';
-  renderAll();
-}
-
-function removePlayer(name) {
-  if (!confirm(`Remove ${name}?`)) return;
-  state.players = state.players.filter(p=>p.name!==name);
-  delete state.picks[name];
-  renderAll();
-}
-
-function renderPlayersRow() {
-  const row = document.getElementById('players-row');
-  row.querySelectorAll('.player-chip').forEach(c=>c.remove());
-  const form = row.querySelector('.add-player-form');
-  state.players.forEach(p => {
-    const chip = document.createElement('div');
-    chip.className = 'player-chip';
-    chip.innerHTML = `<span class="dot" style="background:${p.color}"></span><span>${p.name}</span><button class="remove-btn" onclick="removePlayer('${p.name.replace(/'/g,"\\'")}')">×</button>`;
-    row.insertBefore(chip, form);
-  });
-}
 
 // ─── TABS ─────────────────────────────────────────────────────────────────────
 function switchTab(tab, el) {
@@ -770,7 +730,6 @@ function clearConfirm() {
 }
 
 function renderAll() {
-  renderPlayersRow();
   renderLeaderboard();
   renderBrackets();
   renderEntryGrid();
@@ -780,6 +739,7 @@ function renderAll() {
 (async function init() {
   const raw = localStorage.getItem('rg2026_state');
   if (raw) { try { state = JSON.parse(raw); } catch(e){} }
+  state.players = PLAYERS;
   if (!state.results) state.results = {atp:{r64:[],r32:[],r16:[],r8:[],qf:[],sf:[],final:[]},wta:{r64:[],r32:[],r16:[],r8:[],qf:[],sf:[],final:[]}};
 
   jsonbinKey = localStorage.getItem('rg2026_jsonbin_key')||'';
