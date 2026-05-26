@@ -13,4 +13,4 @@ export const PLAYERS: Player[] = [
 export const SERVED_BASE = 'https://served.bracket.tennis/tournaments/roland-garros-2026';
 
 // Free CORS proxy — required because browsers block direct cross-origin fetches.
-export const CORS_PROXY = 'https://api.allorigins.win/get?url=';
+export const CORS_PROXY = 'https://corsproxy.io/?';

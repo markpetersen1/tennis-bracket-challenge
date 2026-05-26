@@ -12,7 +12,6 @@ export function parsePoints(html: string): number | null {
 export async function fetchPlayerPoints(username: string, draw: Draw): Promise<number | null> {
   const targetUrl = `${SERVED_BASE}/${draw}/brackets/${username}`;
   const r = await fetch(`${CORS_PROXY}${encodeURIComponent(targetUrl)}`);
-  const data = await r.json();
-  if (data.status?.http_code !== 200) return null;
-  return parsePoints(data.contents as string);
+  if (!r.ok) return null;
+  return parsePoints(await r.text());
 }
