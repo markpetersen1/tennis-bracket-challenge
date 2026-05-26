@@ -1,3 +1,4 @@
+import { SERVED_BASE } from './constants';
 import type { Player, Scores } from './types';
 
 export function showToast(msg: string): void {
@@ -34,11 +35,9 @@ export function renderLeaderboard(players: Player[], scores: Scores): void {
       <div class="lb-rank ${i === 0 && p.total !== null ? 'first' : ''}">${i + 1}</div>
       <span class="dot" style="background:${p.color}"></span>
       <div class="lb-name">${p.name}</div>
-      <div class="lb-breakdown">
-        <span>ATP <strong>${pts(p.atp)}</strong></span>
-        <span>WTA <strong>${pts(p.wta)}</strong></span>
-      </div>
-      <div>
+      <div class="lb-score"><strong>${pts(p.atp)}</strong> <a class="bracket-link" href="${SERVED_BASE}/atp/brackets/${p.name}" target="_blank">↗</a></div>
+      <div class="lb-score"><strong>${pts(p.wta)}</strong> <a class="bracket-link" href="${SERVED_BASE}/wta/brackets/${p.name}" target="_blank">↗</a></div>
+      <div class="lb-total">
         <div class="lb-pts">${p.total !== null ? p.total : '—'}</div>
         <div class="lb-pts-label">pts</div>
       </div>
