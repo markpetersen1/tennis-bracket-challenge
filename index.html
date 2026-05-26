@@ -3,130 +3,59 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Roland Garros 2026 — Group Bracket</title>
+<title>Roland Garros 2026 — Bracket Standings</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
     --clay: #C4622D; --clay-light: #E07840; --clay-dark: #8B3A18;
     --sand: #F5E6D3; --sand-dark: #E8D4BC; --chalk: #FBF6F0;
-    --green: #2D6B3C; --green-light: #4A9B60;
+    --green: #2D6B3C;
     --text-dark: #1A0E08; --text-mid: #5C3820; --text-light: #9B7055;
     --white: #FFFCF8; --line: rgba(139,58,24,0.18);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'DM Mono', monospace; background: var(--sand); color: var(--text-dark); min-height: 100vh; }
 
-  /* HEADER */
   header { background: var(--clay); color: var(--chalk); padding: 1.5rem 2rem 1.2rem; border-bottom: 4px solid var(--clay-dark); }
   .header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
   header h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.6rem,4vw,2.4rem); font-weight: 900; line-height: 1; }
   header h1 span { display: block; font-size: 0.52em; font-weight: 400; letter-spacing: 0.15em; opacity: 0.7; font-family: 'DM Mono', monospace; margin-bottom: 0.25rem; }
   .header-meta { font-size: 0.68rem; opacity: 0.65; letter-spacing: 0.06em; line-height: 1.8; text-align: right; }
 
-  /* SETUP BANNER */
-  #setup-banner { background: var(--clay-dark); color: var(--chalk); padding: 0.9rem 2rem; font-size: 0.72rem; line-height: 1.7; display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
-  #setup-banner strong { color: #FFD6B8; }
-  #setup-banner a { color: #FFD6B8; }
-  .setup-fields { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
-  .setup-fields input { font-family: 'DM Mono', monospace; font-size: 0.7rem; padding: 0.3rem 0.6rem; border: 1.5px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: var(--chalk); border-radius: 2px; outline: none; width: 280px; }
-  .setup-fields input::placeholder { color: rgba(255,255,255,0.4); }
-  .setup-fields input:focus { border-color: rgba(255,255,255,0.7); }
+  main { padding: 1.5rem 2rem; max-width: 900px; margin: 0 auto; }
 
-  /* TABS */
-  .tab-bar { background: var(--clay-dark); display: flex; gap: 0; padding: 0 2rem; }
-  .tab { padding: 0.65rem 1.2rem; font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.08em; color: rgba(255,255,255,0.5); cursor: pointer; border: none; background: none; border-bottom: 3px solid transparent; transition: all 0.2s; text-transform: uppercase; }
-  .tab.active { color: var(--chalk); border-bottom-color: var(--sand); }
-  .tab:hover:not(.active) { color: rgba(255,255,255,0.8); }
+  .toolbar { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  #status-text { font-size: 0.68rem; color: var(--text-light); flex: 1; }
 
-  main { padding: 1.5rem 2rem; max-width: 1300px; margin: 0 auto; }
-
-  /* PLAYERS ROW */
-  .section-label { font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-light); margin-bottom: 0.7rem; font-weight: 500; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
-
-  /* INPUTS / BUTTONS */
-  input[type="text"] { font-family: 'DM Mono', monospace; font-size: 0.75rem; padding: 0.4rem 0.7rem; border: 2px solid var(--line); background: var(--white); color: var(--text-dark); border-radius: 2px; outline: none; transition: border-color 0.2s; }
-  input[type="text"]:focus { border-color: var(--clay); }
-  input[type="text"]::placeholder { color: var(--text-light); opacity: 0.55; }
   .btn { font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.06em; padding: 0.4rem 0.9rem; border: none; cursor: pointer; border-radius: 2px; transition: all 0.15s; text-transform: uppercase; }
-  .btn-primary { background: var(--clay); color: var(--chalk); }
-  .btn-primary:hover { background: var(--clay-light); }
   .btn-secondary { background: transparent; color: var(--clay); border: 2px solid var(--clay); }
   .btn-secondary:hover { background: var(--clay); color: var(--chalk); }
-  .btn-ghost { background: transparent; color: var(--text-light); border: 2px solid var(--line); font-size: 0.64rem; }
-  .btn-ghost:hover { border-color: var(--clay); color: var(--clay); }
-  .btn-sm { padding: 0.28rem 0.65rem; font-size: 0.62rem; }
 
-  /* LEADERBOARD */
-  .leaderboard { background: var(--white); border: 2px solid var(--line); border-radius: 2px; overflow: hidden; margin-bottom: 1.5rem; }
-  .leaderboard-header { background: var(--clay-dark); color: var(--chalk); padding: 0.6rem 1.2rem; font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; }
-  .leaderboard-row { display: flex; align-items: center; padding: 0.7rem 1.2rem; border-bottom: 1px solid var(--line); gap: 0.9rem; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+
+  .leaderboard { background: var(--white); border: 2px solid var(--line); border-radius: 2px; overflow: hidden; }
+  .leaderboard-header { background: var(--clay-dark); color: var(--chalk); padding: 0.6rem 1.2rem; font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; display: grid; grid-template-columns: 2.5rem 1rem 1fr 1fr 1fr 5rem; align-items: center; gap: 0.5rem; }
+  .leaderboard-row { display: grid; grid-template-columns: 2.5rem 1rem 1fr 1fr 1fr 5rem; align-items: center; gap: 0.5rem; padding: 0.85rem 1.2rem; border-bottom: 1px solid var(--line); }
   .leaderboard-row:last-child { border-bottom: none; }
   .leaderboard-row:hover { background: var(--sand); }
-  .lb-rank { font-size: 1.1rem; color: var(--text-light); width: 2rem; text-align: center; font-family: 'Playfair Display', serif; }
+  .lb-rank { font-size: 1.1rem; color: var(--text-light); text-align: center; font-family: 'Playfair Display', serif; }
   .lb-rank.first { color: var(--clay); font-weight: 700; }
-  .lb-name { flex: 1; font-size: 0.78rem; font-weight: 500; }
-  .lb-breakdown { font-size: 0.6rem; color: var(--text-light); display: flex; gap: 0.7rem; }
-  .lb-pts { font-size: 1.05rem; font-weight: 500; color: var(--clay); font-family: 'Playfair Display', serif; min-width: 55px; text-align: right; }
+  .lb-name { font-size: 0.78rem; font-weight: 500; }
+  .lb-score { font-size: 0.75rem; color: var(--text-mid); }
+  .lb-score strong { color: var(--text-dark); }
+  .lb-total { text-align: right; }
+  .lb-pts { font-size: 1.05rem; font-weight: 500; color: var(--clay); font-family: 'Playfair Display', serif; }
   .lb-pts-label { font-size: 0.56rem; color: var(--text-light); letter-spacing: 0.08em; }
 
-  /* RESULTS REFRESH */
-  .results-bar { background: var(--white); border: 2px solid var(--line); border-radius: 2px; padding: 0.9rem 1.2rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-  .results-bar .status { font-size: 0.68rem; color: var(--text-light); flex: 1; }
-  .results-bar .status strong { color: var(--text-mid); }
-  #refresh-log { font-size: 0.65rem; color: var(--text-light); margin-top: 0.5rem; line-height: 1.6; max-height: 80px; overflow-y: auto; }
-
-  /* BRACKETS */
-  .draw-toggle { display: flex; gap: 0.5rem; margin-bottom: 1.2rem; }
-  .round-section { background: var(--white); border: 2px solid var(--line); border-radius: 2px; overflow: hidden; margin-bottom: 1rem; }
-  .round-header { background: var(--sand-dark); padding: 0.55rem 1.1rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--line); }
-  .round-title { font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-mid); font-weight: 500; }
-  .round-pts { font-size: 0.58rem; color: var(--text-light); }
-  .matches-grid { padding: 0.8rem 1rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 0.6rem; }
-  .match-card { border: 1.5px solid var(--line); border-radius: 2px; overflow: hidden; }
-  .match-label { font-size: 0.55rem; color: var(--text-light); padding: 0.2rem 0.55rem; background: var(--sand); border-bottom: 1px solid var(--line); }
-  .pick-row { padding: 0.35rem 0.55rem; display: flex; flex-wrap: wrap; gap: 3px; }
-  .pick-badge { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 1px; font-size: 0.59rem; font-weight: 500; white-space: nowrap; }
-  .badge-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-  .pick-badge.correct { background: rgba(45,107,60,0.12); color: var(--green); border: 1px solid rgba(45,107,60,0.25); }
-  .pick-badge.wrong { background: rgba(196,98,45,0.08); color: var(--clay); border: 1px solid rgba(196,98,45,0.18); text-decoration: line-through; opacity: 0.6; }
-  .pick-badge.pending { background: var(--sand); color: var(--text-light); border: 1px solid var(--line); }
-  .actual-winner { font-size: 0.62rem; color: var(--green); padding: 0.2rem 0.55rem 0.3rem; border-top: 1px solid var(--line); background: rgba(45,107,60,0.04); font-style: italic; }
-
-  /* ENTRY */
-  .entry-panel { background: var(--white); border: 2px solid var(--line); border-radius: 2px; overflow: hidden; }
-  .entry-header { background: var(--clay); color: var(--chalk); padding: 0.75rem 1.2rem; font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; }
-  .entry-body { padding: 1.1rem; }
-  .entry-instructions { font-size: 0.7rem; color: var(--text-mid); line-height: 1.65; margin-bottom: 1.1rem; padding: 0.75rem; background: var(--sand); border-left: 3px solid var(--clay); }
-  .entry-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px,1fr)); gap: 1.2rem; }
-  .player-entry-block { border: 1.5px solid var(--line); border-radius: 2px; overflow: hidden; }
-  .player-entry-header { padding: 0.45rem 0.75rem; display: flex; align-items: center; gap: 0.45rem; border-bottom: 1px solid var(--line); background: var(--sand); }
-  .player-entry-header .name { font-size: 0.75rem; font-weight: 500; }
-  .player-entry-header a { font-size: 0.58rem; color: var(--clay); margin-left: auto; text-decoration: none; }
-  .round-entry-group { padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--line); }
-  .round-entry-group:last-child { border-bottom: none; }
-  .round-entry-label { font-size: 0.56rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-light); margin-bottom: 0.35rem; font-weight: 500; }
-  .picks-inputs { display: flex; flex-direction: column; gap: 0.25rem; }
-  .pick-input-row { display: flex; gap: 0.35rem; align-items: center; }
-  .pick-input-row input { flex: 1; font-size: 0.68rem; padding: 0.28rem 0.5rem; }
-  .pick-status { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-  .pick-status.correct { background: var(--green); }
-  .pick-status.wrong { background: var(--clay); }
-  .pick-status.pending { background: var(--sand-dark); border: 1px solid var(--line); }
-  .entry-controls { display: flex; gap: 0.6rem; margin-top: 1.1rem; flex-wrap: wrap; align-items: center; }
-  .sync-status { font-size: 0.62rem; color: var(--text-light); }
-
-  /* TOAST */
   #toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--clay-dark); color: var(--chalk); padding: 0.6rem 1.2rem; font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.08em; border-radius: 2px; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
 
-  .view { display: none; }
-  .view.active { display: block; }
-  .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--text-light); font-size: 0.75rem; line-height: 2; }
-  .empty-state .big { font-family: 'Playfair Display', serif; font-size: 2rem; display: block; margin-bottom: 0.4rem; opacity: 0.25; }
-
   @media (max-width: 600px) {
-    main { padding: 1rem; } header { padding: 1rem; } .tab-bar { padding: 0 1rem; }
-    .matches-grid { grid-template-columns: 1fr; }
+    main { padding: 1rem; }
+    header { padding: 1rem; }
+    .leaderboard-header { display: none; }
+    .leaderboard-row { grid-template-columns: 2rem 0.8rem 1fr auto; grid-template-rows: auto auto; }
+    .lb-score { grid-column: 3 / 5; font-size: 0.65rem; }
+    .lb-total { grid-column: 4; grid-row: 1; }
   }
 </style>
 </head>
@@ -139,623 +68,27 @@
   </div>
 </header>
 
-<!-- SETUP BANNER -->
-<div id="setup-banner">
-  <div>
-    <strong>Setup:</strong> Get a free JSONBin key at
-    <a href="https://jsonbin.io" target="_blank">jsonbin.io</a> → Sign up → API Keys → Create Access Key.
-    Then enter it below so your group shares the same data.
-  </div>
-  <div class="setup-fields">
-    <input type="text" id="jsonbin-key-input" placeholder="Paste your JSONBin Master Key here" autocomplete="off">
-    <button class="btn btn-primary btn-sm" onclick="saveJsonBinKey()">Save Key</button>
-    <button class="btn btn-ghost btn-sm" id="sync-btn" onclick="syncNow()">↺ Sync</button>
-  </div>
-</div>
-
-<div class="tab-bar">
-  <button class="tab active" onclick="switchTab('leaderboard', this)">Standings</button>
-  <button class="tab" onclick="switchTab('brackets', this)">Brackets</button>
-  <button class="tab" onclick="switchTab('entry', this)">Enter Picks</button>
-</div>
-
 <main>
-
-  <!-- LEADERBOARD -->
-  <div class="view active" id="view-leaderboard">
-    <!-- Results refresh bar -->
-    <div class="results-bar">
-      <div>
-        <div class="status"><strong>Live Results:</strong> Fetches real match results from api-tennis.com and updates scores automatically. Player matching is fuzzy (last-name based), so "Jannik Sinner" matches "Sinner J." etc.</div>
-        <div id="refresh-log"></div>
-      </div>
-      <div style="display:flex;gap:0.5rem;flex-direction:column;align-items:flex-end">
-        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-          <button class="btn btn-secondary btn-sm" onclick="fetchResults('atp')">🎾 Fetch ATP Results</button>
-          <button class="btn btn-secondary btn-sm" onclick="fetchResults('wta')">🎾 Fetch WTA Results</button>
-        </div>
-        <div style="font-size:0.6rem;color:var(--text-light)" id="last-fetched"></div>
-      </div>
-    </div>
-    <div class="section-label">Current Standings</div>
-    <div class="leaderboard">
-      <div class="leaderboard-header">Rank · Player · ATP + WTA Points</div>
-      <div id="leaderboard-body"></div>
-    </div>
+  <div class="toolbar">
+    <div id="status-text">Press Refresh to load standings.</div>
+    <button class="btn btn-secondary" onclick="refreshStandings()">↺ Refresh Standings</button>
   </div>
 
-  <!-- BRACKETS -->
-  <div class="view" id="view-brackets">
-    <div class="draw-toggle">
-      <button class="btn btn-primary btn-sm" id="toggle-atp" onclick="switchDraw('atp')">Men's ATP</button>
-      <button class="btn btn-ghost btn-sm" id="toggle-wta" onclick="switchDraw('wta')">Women's WTA</button>
+  <div class="leaderboard">
+    <div class="leaderboard-header">
+      <span>Rank</span>
+      <span></span>
+      <span>Player</span>
+      <span>Men's ATP</span>
+      <span>Women's WTA</span>
+      <span style="text-align:right">Total</span>
     </div>
-    <div id="brackets-body"></div>
+    <div id="leaderboard-body"></div>
   </div>
-
-  <!-- ENTRY -->
-  <div class="view" id="view-entry">
-    <div class="entry-panel">
-      <div class="entry-header">Enter Picks — look up each person at served.bracket.tennis</div>
-      <div class="entry-body">
-        <div class="entry-instructions">
-          Visit <strong>served.bracket.tennis/tournaments/roland-garros-2026/[atp|wta]/brackets/[username]</strong> for each person, then enter their picks below by round. Picks save to JSONBin and sync across your group automatically.
-        </div>
-        <div class="draw-toggle">
-          <button class="btn btn-primary btn-sm" id="entry-atp" onclick="switchEntryDraw('atp')">Men's ATP</button>
-          <button class="btn btn-ghost btn-sm" id="entry-wta" onclick="switchEntryDraw('wta')">Women's WTA</button>
-        </div>
-        <div class="entry-grid" id="entry-grid"></div>
-        <div class="entry-controls">
-          <button class="btn btn-primary" onclick="saveAndSync()">Save & Sync</button>
-          <button class="btn btn-ghost" onclick="clearConfirm()">Clear All Data</button>
-          <span class="sync-status" id="sync-status"></span>
-        </div>
-      </div>
-    </div>
-  </div>
-
 </main>
 
 <div id="toast"></div>
 
-<script>
-// ─── CONFIG ──────────────────────────────────────────────────────────────────
-const COLORS = ['#C4622D','#2D6B3C','#4A7FB5','#9B59B6','#E67E22','#1ABC9C','#E74C3C','#3498DB','#F39C12','#16A085'];
-const PLAYERS = [
-  { name: 'sunchine', color: COLORS[0] },
-  { name: 'meelz',    color: COLORS[1] },
-];
-const ROUNDS = [
-  { key:'r64',   label:'Round of 128→64',  slots:64, pts:10  },
-  { key:'r32',   label:'Round of 64→32',   slots:32, pts:20  },
-  { key:'r16',   label:'Round of 32→16',   slots:16, pts:30  },
-  { key:'r8',    label:'Round of 16→QF',   slots:8,  pts:40  },
-  { key:'qf',    label:'Quarterfinals',    slots:4,  pts:60  },
-  { key:'sf',    label:'Semifinals',       slots:2,  pts:80  },
-  { key:'final', label:'Champion',         slots:1,  pts:100 },
-];
-const JSONBIN_BASE = 'https://api.jsonbin.io/v3';
-const BIN_NAME = 'rg2026-bracket-tracker';
-
-// api-tennis.com integration — single-user hardcoded key
-// ⚠️ Rotate this key at api-tennis.com after adding it here, since it lives in source.
-const API_TENNIS_KEY = '58bf9b99cb09db712f794c82d3e2ee957451f2571421e34dcb9fa5e0415cb4fc';
-const API_TENNIS_BASE = 'https://api.api-tennis.com/tennis/';
-// Cache the Roland Garros 2026 tournament key once we discover it
-let RG_TOURNAMENT_KEY = localStorage.getItem('rg2026_tournament_key') || null;
-
-// ─── STATE ───────────────────────────────────────────────────────────────────
-let state = {
-  players: PLAYERS,
-  picks: {},
-  results: {
-    atp: { r64:[],r32:[],r16:[],r8:[],qf:[],sf:[],final:[] },
-    wta: { r64:[],r32:[],r16:[],r8:[],qf:[],sf:[],final:[] },
-  },
-  lastFetched: null,
-};
-let jsonbinKey = '';
-let binId = '';
-let currentDraw = 'atp';
-let currentEntryDraw = 'atp';
-
-// ─── JSONBIN ─────────────────────────────────────────────────────────────────
-async function saveJsonBinKey() {
-  const k = document.getElementById('jsonbin-key-input').value.trim();
-  if (!k) return;
-  jsonbinKey = k;
-  localStorage.setItem('rg2026_jsonbin_key', k);
-  await initBin();
-  showToast('Key saved! Syncing...');
-  await syncNow();
-}
-
-async function initBin() {
-  if (!jsonbinKey) return;
-  const stored = localStorage.getItem('rg2026_bin_id');
-  if (stored) { binId = stored; return; }
-  try {
-    const r = await fetch(`${JSONBIN_BASE}/b`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Master-Key': jsonbinKey, 'X-Bin-Name': BIN_NAME, 'X-Bin-Private': 'true' },
-      body: JSON.stringify(state)
-    });
-    const d = await r.json();
-    if (d.metadata && d.metadata.id) {
-      binId = d.metadata.id;
-      localStorage.setItem('rg2026_bin_id', binId);
-    }
-  } catch(e) { showToast('Error creating bin — check your key'); }
-}
-
-async function pushToJsonBin() {
-  if (!jsonbinKey || !binId) return false;
-  try {
-    await fetch(`${JSONBIN_BASE}/b/${binId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'X-Master-Key': jsonbinKey },
-      body: JSON.stringify(state)
-    });
-    return true;
-  } catch(e) { return false; }
-}
-
-async function pullFromJsonBin() {
-  if (!jsonbinKey || !binId) return false;
-  try {
-    const r = await fetch(`${JSONBIN_BASE}/b/${binId}/latest`, {
-      headers: { 'X-Master-Key': jsonbinKey }
-    });
-    const d = await r.json();
-    if (d.record) {
-      state = d.record;
-      state.players = PLAYERS;
-      if (!state.results) state.results = { atp:{r64:[],r32:[],r16:[],r8:[],qf:[],sf:[],final:[]}, wta:{r64:[],r32:[],r16:[],r8:[],qf:[],sf:[],final:[]} };
-      localStorage.setItem('rg2026_state', JSON.stringify(state));
-      return true;
-    }
-  } catch(e) {}
-  return false;
-}
-
-async function syncNow() {
-  const btn = document.getElementById('sync-btn');
-  if (btn) btn.textContent = '↻ Syncing...';
-  const ok = await pullFromJsonBin();
-  if (btn) btn.textContent = '↺ Sync';
-  if (ok) { renderAll(); showToast('Synced!'); }
-  else if (!jsonbinKey) showToast('Enter your JSONBin key first');
-  else showToast('Sync failed — check key & bin ID');
-}
-
-async function saveAndSync() {
-  collectEntryInputs();
-  localStorage.setItem('rg2026_state', JSON.stringify(state));
-  setSyncStatus('Saving...');
-  if (jsonbinKey && binId) {
-    const ok = await pushToJsonBin();
-    setSyncStatus(ok ? '✓ Synced to cloud' : '✗ Cloud sync failed');
-  } else {
-    setSyncStatus('Saved locally (no JSONBin key)');
-  }
-  renderAll();
-}
-
-function setSyncStatus(msg) {
-  const el = document.getElementById('sync-status');
-  if (el) el.textContent = msg;
-}
-
-// ─── API-TENNIS.COM RESULTS FETCH ────────────────────────────────────────────
-// Round names that api-tennis.com uses → our internal round keys
-// (Best guess based on common conventions; logged & corrected on first run)
-const ROUND_NAME_MAP = {
-  'first round': 'r64',
-  'round of 128': 'r64',
-  '1st round': 'r64',
-  'round 1': 'r64',
-  'second round': 'r32',
-  'round of 64': 'r32',
-  '2nd round': 'r32',
-  'round 2': 'r32',
-  'third round': 'r16',
-  'round of 32': 'r16',
-  '3rd round': 'r16',
-  'round 3': 'r16',
-  'fourth round': 'r8',
-  'round of 16': 'r8',
-  '4th round': 'r8',
-  'round 4': 'r8',
-  'quarter-finals': 'qf',
-  'quarterfinals': 'qf',
-  'quarter finals': 'qf',
-  'quarterfinal': 'qf',
-  'semi-finals': 'sf',
-  'semifinals': 'sf',
-  'semi finals': 'sf',
-  'semifinal': 'sf',
-  'final': 'final',
-  'finals': 'final',
-};
-
-function normalizeRoundName(raw) {
-  if (!raw) return null;
-  const k = String(raw).toLowerCase().trim();
-  return ROUND_NAME_MAP[k] || null;
-}
-
-// Pull last name out of "Jannik Sinner" or "J. Sinner" or "Sinner J." → "sinner"
-function lastNameKey(fullName) {
-  if (!fullName) return '';
-  let s = String(fullName).trim().toLowerCase().replace(/[.,]/g, '');
-  // "Sinner J" pattern (last-first)
-  const parts = s.split(/\s+/);
-  if (parts.length >= 2) {
-    // Heuristic: single-letter token = initial; the OTHER part is last name
-    const hasInitialAtEnd = parts[parts.length-1].length === 1;
-    const hasInitialAtStart = parts[0].length === 1;
-    if (hasInitialAtEnd && !hasInitialAtStart) return parts[0]; // "Sinner J" → sinner
-    if (hasInitialAtStart && !hasInitialAtEnd) return parts[parts.length-1]; // "J Sinner" → sinner
-    return parts[parts.length-1]; // "Jannik Sinner" → sinner
-  }
-  return s;
-}
-
-// Find RG 2026 tournament key by listing all tournaments
-async function discoverRolandGarrosKey(log) {
-  if (RG_TOURNAMENT_KEY) {
-    log(`Using cached tournament key: ${RG_TOURNAMENT_KEY}`);
-    return RG_TOURNAMENT_KEY;
-  }
-  log('Discovering Roland Garros 2026 tournament key...');
-  const url = `${API_TENNIS_BASE}?method=get_tournaments&APIkey=${API_TENNIS_KEY}`;
-  const r = await fetch(url);
-  const d = await r.json();
-  if (!d.result || !Array.isArray(d.result)) {
-    throw new Error('Unexpected tournaments response: ' + JSON.stringify(d).slice(0,200));
-  }
-  // Look for Roland Garros / French Open
-  const candidates = d.result.filter(t => {
-    const name = (t.tournament_name || '').toLowerCase();
-    return name.includes('roland') || name.includes('french open');
-  });
-  log(`Found ${candidates.length} matching tournaments: ${candidates.map(c=>c.tournament_name).join(', ')}`);
-  if (!candidates.length) throw new Error('Roland Garros not found in tournament list');
-  // Prefer one with "2026" or take the first
-  const match = candidates.find(c => (c.tournament_name||'').includes('2026')) || candidates[0];
-  RG_TOURNAMENT_KEY = match.tournament_key;
-  localStorage.setItem('rg2026_tournament_key', RG_TOURNAMENT_KEY);
-  log(`Using tournament key: ${RG_TOURNAMENT_KEY} (${match.tournament_name})`);
-  return RG_TOURNAMENT_KEY;
-}
-
-async function fetchResults(draw) {
-  const logEl = document.getElementById('refresh-log');
-  const lines = [];
-  const log = (msg) => {
-    lines.push(msg);
-    logEl.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
-  };
-  log(`Fetching ${draw.toUpperCase()} results from api-tennis.com...`);
-
-  try {
-    const tKey = await discoverRolandGarrosKey(log);
-
-    // Date range: tournament runs May 24 – June 7, 2026
-    const dateFrom = '2026-05-24';
-    const dateTo = '2026-06-07';
-    const url = `${API_TENNIS_BASE}?method=get_fixtures&APIkey=${API_TENNIS_KEY}&tournament_key=${tKey}&date_start=${dateFrom}&date_stop=${dateTo}`;
-    log(`Fetching fixtures...`);
-    const r = await fetch(url);
-    const d = await r.json();
-
-    if (!d.result || !Array.isArray(d.result)) {
-      throw new Error('Unexpected fixtures response. Raw: ' + JSON.stringify(d).slice(0,300));
-    }
-
-    log(`Received ${d.result.length} total fixtures`);
-
-    // Filter by draw type (event_type_type === 'Atp Singles' / 'Wta Singles' is common,
-    // but field names vary. Log a sample and try multiple heuristics.)
-    if (d.result.length > 0) {
-      const sample = d.result[0];
-      console.log('Sample fixture from api-tennis.com:', sample);
-      log(`Sample fields: ${Object.keys(sample).slice(0,12).join(', ')}`);
-    }
-
-    const drawLabel = draw === 'atp' ? 'atp' : 'wta';
-    // Try several common field names for the event/tour type
-    const matches = d.result.filter(m => {
-      const eventType = ((m.event_type_type || m.tournament_type || m.event_type || '') + '').toLowerCase();
-      const tName = ((m.tournament_name || '') + '').toLowerCase();
-      // Match if event type mentions ATP/WTA OR if it's a singles event with men/women
-      if (eventType.includes(drawLabel)) return true;
-      // Fallback: filter by singles + gender hints in tournament name
-      if (drawLabel === 'atp' && (eventType.includes('men') || tName.includes("men's"))) return true;
-      if (drawLabel === 'wta' && (eventType.includes('women') || tName.includes("women's"))) return true;
-      return false;
-    });
-
-    log(`${matches.length} matches matched ${draw.toUpperCase()} filter`);
-
-    // Group winners by round
-    const winnersByRound = { r64:[], r32:[], r16:[], r8:[], qf:[], sf:[], final:[] };
-    let unmatchedRounds = new Set();
-    let completed = 0;
-
-    matches.forEach(m => {
-      const status = ((m.event_status || m.event_final_result || '') + '').toLowerCase();
-      const isFinished = status.includes('finished') || status.includes('ended') || !!m.event_winner;
-      if (!isFinished) return;
-
-      const roundRaw = m.tournament_round || m.round || m.event_round || '';
-      const roundKey = normalizeRoundName(roundRaw);
-      if (!roundKey) {
-        unmatchedRounds.add(roundRaw);
-        return;
-      }
-
-      // event_winner is typically "First Player" / "Second Player" indicating which side won
-      // Player names usually in event_first_player / event_second_player
-      let winnerName = '';
-      const winnerSide = (m.event_winner || '').toLowerCase();
-      if (winnerSide.includes('first') || winnerSide === 'home') {
-        winnerName = m.event_first_player || m.event_home_team || m.first_player || '';
-      } else if (winnerSide.includes('second') || winnerSide === 'away') {
-        winnerName = m.event_second_player || m.event_away_team || m.second_player || '';
-      } else if (m.event_winner && !winnerSide.includes('first') && !winnerSide.includes('second')) {
-        // Sometimes event_winner is the name directly
-        winnerName = m.event_winner;
-      }
-
-      if (winnerName) {
-        winnersByRound[roundKey].push(winnerName.trim());
-        completed++;
-      }
-    });
-
-    if (unmatchedRounds.size > 0) {
-      log(`⚠ Unrecognized round names (need mapping): ${[...unmatchedRounds].join(', ')}`);
-    }
-
-    // Merge into state — only overwrite a round if we have new data
-    ROUNDS.forEach(r => {
-      if (winnersByRound[r.key].length > 0) {
-        state.results[draw][r.key] = winnersByRound[r.key];
-        log(`  ${r.label}: ${winnersByRound[r.key].length} winners`);
-      }
-    });
-
-    if (completed === 0) {
-      log('⚠ No completed matches parsed. Open browser console (F12) to see the sample fixture object and report field names.');
-    } else {
-      log(`✓ Loaded ${completed} winners across rounds`);
-    }
-
-    const timestamp = new Date().toLocaleTimeString();
-    document.getElementById('last-fetched').textContent = `Last fetched: ${timestamp}`;
-    state.lastFetched = new Date().toISOString();
-    localStorage.setItem('rg2026_state', JSON.stringify(state));
-    if (jsonbinKey && binId) await pushToJsonBin();
-    renderAll();
-    showToast(`${draw.toUpperCase()} updated: ${completed} winners`);
-  } catch(e) {
-    log(`✗ Error: ${e.message}`);
-    console.error('Full error:', e);
-  }
-}
-
-// ─── SCORING ─────────────────────────────────────────────────────────────────
-// Match a user-entered pick against the actual winners list using last-name matching
-// so "Jannik Sinner" matches "Sinner J." or "J. Sinner"
-function pickMatchesAnyWinner(pick, winners) {
-  if (!pick || !winners || !winners.length) return false;
-  const pickKey = lastNameKey(pick);
-  if (!pickKey) return false;
-  // First try exact lowercase match
-  const pLower = pick.toLowerCase().trim();
-  for (const w of winners) {
-    if (w.toLowerCase().trim() === pLower) return true;
-  }
-  // Then last-name fuzzy match
-  for (const w of winners) {
-    if (lastNameKey(w) === pickKey) return true;
-  }
-  return false;
-}
-
-function calcPoints(playerName, draw) {
-  const picks = (state.picks[playerName]||{})[draw]||{};
-  const results = state.results[draw]||{};
-  let total = 0;
-  const byRound = {};
-  ROUNDS.forEach(r => {
-    const myPicks = picks[r.key]||[];
-    const actual = results[r.key]||[];
-    let pts = 0;
-    myPicks.forEach(p => { if (pickMatchesAnyWinner(p, actual)) pts += r.pts; });
-    byRound[r.key] = pts;
-    total += pts;
-  });
-  return { total, byRound };
-}
-
-// ─── LEADERBOARD ─────────────────────────────────────────────────────────────
-function renderLeaderboard() {
-  const body = document.getElementById('leaderboard-body');
-  if (!state.players.length) {
-    body.innerHTML = '<div class="empty-state"><span class="big">🎾</span>Add group members above to get started</div>';
-    return;
-  }
-  const scored = state.players.map(p => {
-    const atp = calcPoints(p.name, 'atp');
-    const wta = calcPoints(p.name, 'wta');
-    return { ...p, total: atp.total+wta.total, atp, wta };
-  }).sort((a,b)=>b.total-a.total);
-
-  body.innerHTML = scored.map((p,i) => `
-    <div class="leaderboard-row">
-      <div class="lb-rank ${i===0?'first':''}">${i+1}</div>
-      <span class="dot" style="background:${p.color}"></span>
-      <div class="lb-name">${p.name}</div>
-      <div class="lb-breakdown">
-        <span>ATP ${p.atp.total}pts</span>
-        <span>WTA ${p.wta.total}pts</span>
-      </div>
-      <div><div class="lb-pts">${p.total}</div><div class="lb-pts-label">pts</div></div>
-    </div>`).join('');
-}
-
-// ─── BRACKETS ────────────────────────────────────────────────────────────────
-function switchDraw(d) {
-  currentDraw = d;
-  document.getElementById('toggle-atp').className = d==='atp' ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
-  document.getElementById('toggle-wta').className = d==='wta' ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
-  renderBrackets();
-}
-
-function renderBrackets() {
-  const body = document.getElementById('brackets-body');
-  if (!state.players.length) {
-    body.innerHTML = '<div class="empty-state"><span class="big">🎾</span>Add group members first</div>'; return;
-  }
-  const results = state.results[currentDraw]||{};
-  let html = '';
-  ROUNDS.forEach(r => {
-    const actual = results[r.key]||[];
-    let cards = '';
-    for (let i=0; i<r.slots; i++) {
-      const actualWinner = (results[r.key]||[])[i]||'';
-      const badges = state.players.map(p => {
-        const pick = ((state.picks[p.name]||{})[currentDraw]||{})[r.key]?.[i]||'';
-        let status = 'pending';
-        if (pick && actual.length>0) status = pickMatchesAnyWinner(pick, actual) ? 'correct' : 'wrong';
-        return `<span class="pick-badge ${status}"><span class="badge-dot" style="background:${p.color}"></span>${pick||'—'}</span>`;
-      }).join('');
-      cards += `
-        <div class="match-card">
-          <div class="match-label">Slot ${i+1}</div>
-          <div class="pick-row">${badges}</div>
-          ${actualWinner ? `<div class="actual-winner">✓ ${actualWinner}</div>` : ''}
-        </div>`;
-    }
-    html += `
-      <div class="round-section">
-        <div class="round-header">
-          <div class="round-title">${r.label}</div>
-          <div class="round-pts">${r.pts} pts each · ${r.slots} pick${r.slots>1?'s':''}</div>
-        </div>
-        <div class="matches-grid">${cards}</div>
-      </div>`;
-  });
-  body.innerHTML = html;
-}
-
-// ─── ENTRY ───────────────────────────────────────────────────────────────────
-function switchEntryDraw(d) {
-  collectEntryInputs();
-  currentEntryDraw = d;
-  document.getElementById('entry-atp').className = d==='atp' ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
-  document.getElementById('entry-wta').className = d==='wta' ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
-  renderEntryGrid();
-}
-
-function renderEntryGrid() {
-  const grid = document.getElementById('entry-grid');
-  if (!state.players.length) {
-    grid.innerHTML = '<div style="font-size:0.72rem;color:var(--text-light);padding:1rem">Add group members above first.</div>'; return;
-  }
-  const results = state.results[currentEntryDraw]||{};
-  grid.innerHTML = state.players.map(p => {
-    const picks = (state.picks[p.name]||{})[currentEntryDraw]||{};
-    const rounds = ROUNDS.map(r => {
-      const actual = results[r.key]||[];
-      const inputs = Array.from({length:r.slots},(_,i) => {
-        const val = picks[r.key]?.[i]||'';
-        let st = 'pending';
-        if (val && actual.length>0) st = pickMatchesAnyWinner(val, actual) ? 'correct' : 'wrong';
-        return `<div class="pick-input-row"><span class="pick-status ${st}"></span><input type="text" data-player="${p.name}" data-draw="${currentEntryDraw}" data-round="${r.key}" data-idx="${i}" value="${val.replace(/"/g,'&quot;')}" placeholder="Player name" autocomplete="off"></div>`;
-      }).join('');
-      return `<div class="round-entry-group"><div class="round-entry-label">${r.label} — ${r.pts}pts × ${r.slots}</div><div class="picks-inputs">${inputs}</div></div>`;
-    }).join('');
-    return `
-      <div class="player-entry-block">
-        <div class="player-entry-header">
-          <span class="dot" style="background:${p.color}"></span>
-          <span class="name">${p.name}</span>
-          <a href="https://served.bracket.tennis/tournaments/roland-garros-2026/${currentEntryDraw}/brackets/${p.name}" target="_blank">↗ view bracket</a>
-        </div>
-        ${rounds}
-      </div>`;
-  }).join('');
-}
-
-function collectEntryInputs() {
-  document.querySelectorAll('#entry-grid input[data-player]').forEach(inp => {
-    const {player, draw, round, idx} = inp.dataset;
-    if (!state.picks[player]) state.picks[player] = {atp:{r64:[],r32:[],r16:[],r8:[],qf:[],sf:[],final:[]},wta:{r64:[],r32:[],r16:[],r8:[],qf:[],sf:[],final:[]}};
-    if (!state.picks[player][draw]) state.picks[player][draw] = {r64:[],r32:[],r16:[],r8:[],qf:[],sf:[],final:[]};
-    if (!state.picks[player][draw][round]) state.picks[player][draw][round] = [];
-    state.picks[player][draw][round][parseInt(idx)] = inp.value.trim();
-  });
-}
-
-
-// ─── TABS ─────────────────────────────────────────────────────────────────────
-function switchTab(tab, el) {
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('view-'+tab).classList.add('active');
-  if (el) el.classList.add('active');
-  if (tab==='leaderboard') renderLeaderboard();
-  if (tab==='brackets') renderBrackets();
-  if (tab==='entry') renderEntryGrid();
-}
-
-// ─── MISC ─────────────────────────────────────────────────────────────────────
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.style.opacity = '1';
-  setTimeout(()=>{ t.style.opacity='0'; }, 2000);
-}
-
-function clearConfirm() {
-  if (!confirm('Clear ALL data? This cannot be undone.')) return;
-  localStorage.removeItem('rg2026_state');
-  localStorage.removeItem('rg2026_bin_id');
-  state = { players:[], picks:{}, results:{atp:{r64:[],r32:[],r16:[],r8:[],qf:[],sf:[],final:[]},wta:{r64:[],r32:[],r16:[],r8:[],qf:[],sf:[],final:[]}}, lastFetched:null };
-  binId = '';
-  renderAll();
-}
-
-function renderAll() {
-  renderLeaderboard();
-  renderBrackets();
-  renderEntryGrid();
-}
-
-// ─── INIT ─────────────────────────────────────────────────────────────────────
-(async function init() {
-  const raw = localStorage.getItem('rg2026_state');
-  if (raw) { try { state = JSON.parse(raw); } catch(e){} }
-  state.players = PLAYERS;
-  if (!state.results) state.results = {atp:{r64:[],r32:[],r16:[],r8:[],qf:[],sf:[],final:[]},wta:{r64:[],r32:[],r16:[],r8:[],qf:[],sf:[],final:[]}};
-
-  jsonbinKey = localStorage.getItem('rg2026_jsonbin_key')||'';
-  binId = localStorage.getItem('rg2026_bin_id')||'';
-  if (jsonbinKey) {
-    document.getElementById('jsonbin-key-input').value = jsonbinKey;
-    const ok = await pullFromJsonBin();
-    if (ok) showToast('Synced from cloud');
-  }
-
-  if (state.lastFetched) {
-    document.getElementById('last-fetched').textContent = 'Last fetched: '+new Date(state.lastFetched).toLocaleString();
-  }
-
-  renderAll();
-})();
-</script>
+<script type="module" src="/src/main.ts"></script>
 </body>
 </html>
