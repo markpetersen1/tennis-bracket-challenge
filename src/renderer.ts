@@ -17,10 +17,16 @@ function pts(n: number | null): string {
   return n === null ? '—' : `${n}`;
 }
 
+const MEDALS: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' };
+
+function rankBadge(rank: number): string {
+  return MEDALS[rank] ?? String(rank);
+}
+
 export function renderLeaderboard(players: Player[], scores: Scores): void {
   const body = document.getElementById('leaderboard-body')!;
 
-  const ranked = players
+  const sorted = players
     .map(p => {
       const s = scores[p.name] ?? { atp: null, wta: null };
       const atpPts = s.atp ?? 0;
@@ -30,9 +36,17 @@ export function renderLeaderboard(players: Player[], scores: Scores): void {
     })
     .sort((a, b) => (b.total ?? -1) - (a.total ?? -1));
 
-  body.innerHTML = ranked.map((p, i) => `
+  // Standard competition ranking: ties share a rank, next rank skips accordingly
+  const ranked = sorted.map((p, i) => ({ ...p, rank: i + 1 }));
+  for (let i = 1; i < ranked.length; i++) {
+    if (ranked[i].total !== null && ranked[i].total === ranked[i - 1].total) {
+      ranked[i].rank = ranked[i - 1].rank;
+    }
+  }
+
+  body.innerHTML = ranked.map(p => `
     <div class="leaderboard-row">
-      <div class="lb-rank ${i === 0 && p.total !== null ? 'first' : ''}">${i + 1}</div>
+      <div class="lb-rank">${rankBadge(p.rank)}</div>
       <span class="dot" style="background:${p.color}"></span>
       <div class="lb-name">${p.displayName}</div>
       <div class="lb-score"><strong>${pts(p.atp)}</strong> <a class="bracket-link" href="${SERVED_BASE}/atp/brackets/${p.name}" target="_blank">↗</a></div>
