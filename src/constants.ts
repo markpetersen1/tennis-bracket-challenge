@@ -6,9 +6,9 @@ export const COLORS = [
 ];
 
 export const PLAYERS: Player[] = [
-  { name: 'sunchine', color: COLORS[0] },
-  { name: 'meelz',    color: COLORS[1] },
-  { name: 'ace4tom',  color: COLORS[2] },
+  { name: 'sunchine', displayName: 'Mark',   color: COLORS[0] },
+  { name: 'meelz',    displayName: 'Amelia', color: COLORS[1] },
+  { name: 'ace4tom',  displayName: 'Tom',    color: COLORS[2] },
 ];
 
 export const SERVED_BASE = 'https://served.bracket.tennis/tournaments/roland-garros-2026';

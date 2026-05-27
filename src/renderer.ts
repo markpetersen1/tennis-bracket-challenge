@@ -34,7 +34,7 @@ export function renderLeaderboard(players: Player[], scores: Scores): void {
     <div class="leaderboard-row">
       <div class="lb-rank ${i === 0 && p.total !== null ? 'first' : ''}">${i + 1}</div>
       <span class="dot" style="background:${p.color}"></span>
-      <div class="lb-name">${p.name}</div>
+      <div class="lb-name">${p.displayName}</div>
       <div class="lb-score"><strong>${pts(p.atp)}</strong> <a class="bracket-link" href="${SERVED_BASE}/atp/brackets/${p.name}" target="_blank">↗</a></div>
       <div class="lb-score"><strong>${pts(p.wta)}</strong> <a class="bracket-link" href="${SERVED_BASE}/wta/brackets/${p.name}" target="_blank">↗</a></div>
       <div class="lb-total">

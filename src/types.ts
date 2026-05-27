@@ -1,7 +1,8 @@
 export type Draw = 'atp' | 'wta';
 
 export interface Player {
-  name: string;
+  name: string;        // served.bracket.tennis username, used for data fetching
+  displayName: string; // shown in the UI
   color: string;
 }
 
