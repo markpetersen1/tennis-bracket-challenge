@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Roland Garros 2026 — Bracket Standings</title>
+<title>Served Bracket Challenge</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -19,7 +19,7 @@
   header { background: var(--clay); color: var(--chalk); padding: 1.5rem 2rem 1.2rem; border-bottom: 4px solid var(--clay-dark); }
   .header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
   header h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.6rem,4vw,2.4rem); font-weight: 900; line-height: 1; }
-  header h1 span { display: block; font-size: 0.52em; font-weight: 400; letter-spacing: 0.15em; opacity: 0.7; font-family: 'DM Mono', monospace; margin-bottom: 0.25rem; }
+  header h1 .tagline { display: block; font-size: 0.52em; font-weight: 400; letter-spacing: 0.15em; opacity: 0.7; font-family: 'DM Mono', monospace; margin-bottom: 0.25rem; }
   .header-meta { font-size: 0.68rem; opacity: 0.65; letter-spacing: 0.06em; line-height: 1.8; text-align: right; }
 
   main { padding: 1.5rem 2rem; max-width: 900px; margin: 0 auto; }
@@ -32,6 +32,11 @@
   .btn-secondary:hover { background: var(--clay); color: var(--chalk); }
 
   .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+
+  .tabs { display: flex; gap: 0.4rem; padding: 0 2rem; background: var(--clay-dark); }
+  .tab { font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; background: transparent; border: none; color: var(--chalk); opacity: 0.6; padding: 0.55rem 0.9rem; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.15s; }
+  .tab:hover { opacity: 0.85; }
+  .tab-active { opacity: 1; border-bottom-color: var(--chalk); }
 
   .leaderboard { background: var(--white); border: 2px solid var(--line); border-radius: 2px; overflow: hidden; }
   .leaderboard-header { background: var(--clay-dark); color: var(--chalk); padding: 0.6rem 1.2rem; font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; display: grid; grid-template-columns: 2.5rem 1rem 1fr 1fr 1fr 5rem; align-items: center; gap: 0.5rem; }
@@ -64,10 +69,12 @@
 
 <header>
   <div class="header-top">
-    <h1><span>Served Bracket Challenge</span>Roland Garros 2026</h1>
-    <div class="header-meta">May 24 – June 7<br>Paris, France</div>
+    <h1><span class="tagline">Served Bracket Challenge</span><span id="tournament-title"></span></h1>
+    <div class="header-meta" id="tournament-meta"></div>
   </div>
 </header>
+
+<nav class="tabs" id="tournament-tabs"></nav>
 
 <main>
   <div class="toolbar">

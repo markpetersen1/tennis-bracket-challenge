@@ -1,5 +1,5 @@
-import { SERVED_BASE } from './constants';
-import type { Player, Scores } from './types';
+import { SERVED_ROOT } from './constants';
+import type { Player, Scores, Tournament } from './types';
 
 export function showToast(msg: string): void {
   const t = document.getElementById('toast')!;
@@ -23,7 +23,32 @@ function rankBadge(rank: number): string {
   return MEDALS[rank] ?? String(rank);
 }
 
-export function renderLeaderboard(players: Player[], scores: Scores): void {
+export function applyTheme(tournament: Tournament): void {
+  const root = document.documentElement.style;
+  root.setProperty('--clay', tournament.colors.accent);
+  root.setProperty('--clay-light', tournament.colors.accent);
+  root.setProperty('--clay-dark', tournament.colors.accentDark);
+  root.setProperty('--sand', tournament.colors.sand);
+  root.setProperty('--sand-dark', tournament.colors.sandDark);
+
+  document.title = `${tournament.name} — Bracket Standings`;
+  const title = document.getElementById('tournament-title');
+  if (title) title.textContent = tournament.name;
+  const meta = document.getElementById('tournament-meta');
+  if (meta) meta.innerHTML = `${tournament.dates}<br>${tournament.location}`;
+}
+
+export function renderTabs(tournaments: Tournament[], activeId: string, onSelect: (id: string) => void): void {
+  const nav = document.getElementById('tournament-tabs')!;
+  nav.innerHTML = tournaments.map(t => `
+    <button class="tab${t.id === activeId ? ' tab-active' : ''}" data-id="${t.id}">${t.short}</button>
+  `).join('');
+  nav.querySelectorAll<HTMLButtonElement>('.tab').forEach(btn => {
+    btn.addEventListener('click', () => onSelect(btn.dataset.id!));
+  });
+}
+
+export function renderLeaderboard(players: Player[], scores: Scores, tournamentId: string): void {
   const body = document.getElementById('leaderboard-body')!;
 
   const sorted = players
@@ -49,8 +74,8 @@ export function renderLeaderboard(players: Player[], scores: Scores): void {
       <div class="lb-rank">${rankBadge(p.rank)}</div>
       <span class="dot" style="background:${p.color}"></span>
       <div class="lb-name">${p.displayName}</div>
-      <div class="lb-score"><strong>${pts(p.atp)}</strong> <a class="bracket-link" href="${SERVED_BASE}/atp/brackets/${p.name}" target="_blank">↗</a></div>
-      <div class="lb-score"><strong>${pts(p.wta)}</strong> <a class="bracket-link" href="${SERVED_BASE}/wta/brackets/${p.name}" target="_blank">↗</a></div>
+      <div class="lb-score"><strong>${pts(p.atp)}</strong> <a class="bracket-link" href="${SERVED_ROOT}/${tournamentId}/atp/brackets/${p.name}" target="_blank">↗</a></div>
+      <div class="lb-score"><strong>${pts(p.wta)}</strong> <a class="bracket-link" href="${SERVED_ROOT}/${tournamentId}/wta/brackets/${p.name}" target="_blank">↗</a></div>
       <div class="lb-total">
         <div class="lb-pts">${p.total !== null ? p.total : '—'}</div>
         <div class="lb-pts-label">pts</div>

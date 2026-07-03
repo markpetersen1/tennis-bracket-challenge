@@ -1,41 +1,91 @@
-import { PLAYERS } from './constants';
+import { PLAYERS, TOURNAMENTS } from './constants';
 import { fetchPlayerPoints } from './scraper';
-import { renderLeaderboard, showToast, setStatus } from './renderer';
+import { renderLeaderboard, renderTabs, applyTheme, showToast, setStatus } from './renderer';
 import type { Scores, Cache } from './types';
 
-const LS_KEY = 'rg2026_scores_cache';
+const ACTIVE_TOURNAMENT_KEY = 'active_tournament';
+const LEGACY_RG_KEY = 'rg2026_scores_cache';
 
-function loadCache(): Cache | null {
+function cacheKey(tournamentId: string): string {
+  return `${tournamentId}_scores_cache`;
+}
+
+function loadCache(tournamentId: string): Cache | null {
   try {
-    const raw = localStorage.getItem(LS_KEY);
+    const raw = localStorage.getItem(cacheKey(tournamentId));
     return raw ? (JSON.parse(raw) as Cache) : null;
   } catch { return null; }
 }
 
-function saveCache(scores: Scores): void {
+function saveCache(tournamentId: string, scores: Scores): void {
   const cache: Cache = { scores, lastUpdated: new Date().toISOString() };
-  localStorage.setItem(LS_KEY, JSON.stringify(cache));
+  localStorage.setItem(cacheKey(tournamentId), JSON.stringify(cache));
 }
 
-let scores: Scores = Object.fromEntries(
-  PLAYERS.map(p => [p.name, { atp: null, wta: null }])
+// One-time migration: the Roland Garros cache used to live under a fixed key
+// before per-tournament keying existed.
+function migrateLegacyCache(): void {
+  const legacy = localStorage.getItem(LEGACY_RG_KEY);
+  if (legacy && !localStorage.getItem(cacheKey('roland-garros-2026'))) {
+    localStorage.setItem(cacheKey('roland-garros-2026'), legacy);
+  }
+}
+
+function emptyScores(): Scores {
+  return Object.fromEntries(PLAYERS.map(p => [p.name, { atp: null, wta: null }]));
+}
+
+migrateLegacyCache();
+
+const scoresByTournament: Record<string, Scores> = Object.fromEntries(
+  TOURNAMENTS.map(t => [t.id, loadCache(t.id)?.scores ?? emptyScores()])
 );
 
+let activeTournamentId =
+  localStorage.getItem(ACTIVE_TOURNAMENT_KEY) ?? TOURNAMENTS[TOURNAMENTS.length - 1].id;
+if (!TOURNAMENTS.some(t => t.id === activeTournamentId)) {
+  activeTournamentId = TOURNAMENTS[TOURNAMENTS.length - 1].id;
+}
+
+function renderActiveTournament(): void {
+  const tournament = TOURNAMENTS.find(t => t.id === activeTournamentId)!;
+  applyTheme(tournament);
+  renderTabs(TOURNAMENTS, activeTournamentId, switchTournament);
+  renderLeaderboard(PLAYERS, scoresByTournament[activeTournamentId], activeTournamentId);
+
+  const cache = loadCache(activeTournamentId);
+  if (cache) {
+    const time = new Date(cache.lastUpdated).toLocaleTimeString();
+    setStatus(`Last updated: ${time} — press Refresh to reload`);
+  } else {
+    setStatus('Press Refresh to load standings.');
+  }
+}
+
+function switchTournament(id: string): void {
+  if (id === activeTournamentId) return;
+  activeTournamentId = id;
+  localStorage.setItem(ACTIVE_TOURNAMENT_KEY, id);
+  renderActiveTournament();
+}
+
 async function refreshStandings(): Promise<void> {
+  const tournamentId = activeTournamentId;
   setStatus('Fetching standings…');
 
+  const scores = scoresByTournament[tournamentId];
   const fetches = PLAYERS.flatMap(p =>
     (['atp', 'wta'] as const).map(async draw => {
-      const pts = await fetchPlayerPoints(p.name, draw);
+      const pts = await fetchPlayerPoints(tournamentId, p.name, draw);
       scores[p.name] = { ...scores[p.name], [draw]: pts };
-      renderLeaderboard(PLAYERS, scores);
+      renderLeaderboard(PLAYERS, scores, tournamentId);
     })
   );
 
   const results = await Promise.allSettled(fetches);
   const failed = results.filter(r => r.status === 'rejected').length;
 
-  saveCache(scores);
+  saveCache(tournamentId, scores);
   const time = new Date().toLocaleTimeString();
 
   if (failed > 0) {
@@ -50,12 +100,4 @@ async function refreshStandings(): Promise<void> {
 // Expose for the HTML onclick attribute.
 (window as Window & { refreshStandings: () => Promise<void> }).refreshStandings = refreshStandings;
 
-(function init() {
-  const cache = loadCache();
-  if (cache) {
-    scores = cache.scores;
-    const time = new Date(cache.lastUpdated).toLocaleTimeString();
-    setStatus(`Last updated: ${time} — press Refresh to reload`);
-  }
-  renderLeaderboard(PLAYERS, scores);
-})();
+renderActiveTournament();
