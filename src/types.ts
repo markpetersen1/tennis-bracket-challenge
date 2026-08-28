@@ -4,6 +4,7 @@ export interface Player {
   name: string;        // served.bracket.tennis username, used for data fetching
   displayName: string; // shown in the UI
   color: string;
+  pending?: boolean;   // seat reserved but username not known yet — never fetched
 }
 
 export interface TournamentColors {
@@ -20,6 +21,7 @@ export interface Tournament {
   dates: string;      // header meta, e.g. 'Jun 29 – Jul 12'
   location: string;   // header meta, e.g. 'London, England'
   colors: TournamentColors;
+  players: Player[];  // who entered this tournament
 }
 
 export interface PlayerScore {

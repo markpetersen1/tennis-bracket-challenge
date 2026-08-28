@@ -1,5 +1,5 @@
-import { SERVED_ROOT } from './constants';
-import type { Player, Scores, Tournament } from './types';
+import { bracketUrl } from './scraper';
+import type { Draw, Player, Scores, Tournament } from './types';
 
 export function showToast(msg: string): void {
   const t = document.getElementById('toast')!;
@@ -69,13 +69,18 @@ export function renderLeaderboard(players: Player[], scores: Scores, tournamentI
     }
   }
 
+  // Reserved seats sit below everyone with no rank and no bracket to link to.
+  const drawCell = (p: typeof ranked[number], draw: Draw) => p.pending
+    ? '<div class="lb-score lb-pending"><strong>—</strong></div>'
+    : `<div class="lb-score"><strong>${pts(draw === 'atp' ? p.atp : p.wta)}</strong> <a class="bracket-link" href="${bracketUrl(tournamentId, p.name, draw)}" target="_blank">↗</a></div>`;
+
   body.innerHTML = ranked.map(p => `
-    <div class="leaderboard-row">
-      <div class="lb-rank">${rankBadge(p.rank)}</div>
+    <div class="leaderboard-row${p.pending ? ' row-pending' : ''}">
+      <div class="lb-rank">${p.pending ? '·' : rankBadge(p.rank)}</div>
       <span class="dot" style="background:${p.color}"></span>
       <div class="lb-name">${p.displayName}</div>
-      <div class="lb-score"><strong>${pts(p.atp)}</strong> <a class="bracket-link" href="${SERVED_ROOT}/${tournamentId}/atp/brackets/${p.name}" target="_blank">↗</a></div>
-      <div class="lb-score"><strong>${pts(p.wta)}</strong> <a class="bracket-link" href="${SERVED_ROOT}/${tournamentId}/wta/brackets/${p.name}" target="_blank">↗</a></div>
+      ${drawCell(p, 'atp')}
+      ${drawCell(p, 'wta')}
       <div class="lb-total">
         <div class="lb-pts">${p.total !== null ? p.total : '—'}</div>
         <div class="lb-pts-label">pts</div>

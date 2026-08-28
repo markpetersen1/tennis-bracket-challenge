@@ -1,7 +1,7 @@
-import { PLAYERS, TOURNAMENTS } from './constants';
+import { TOURNAMENTS, FETCH_CONCURRENCY } from './constants';
 import { fetchPlayerPoints } from './scraper';
 import { renderLeaderboard, renderTabs, applyTheme, showToast, setStatus } from './renderer';
-import type { Scores, Cache } from './types';
+import type { Player, Scores, Cache, Tournament } from './types';
 
 const ACTIVE_TOURNAMENT_KEY = 'active_tournament';
 const LEGACY_RG_KEY = 'rg2026_scores_cache';
@@ -31,14 +31,18 @@ function migrateLegacyCache(): void {
   }
 }
 
-function emptyScores(): Scores {
-  return Object.fromEntries(PLAYERS.map(p => [p.name, { atp: null, wta: null }]));
+// Every entrant gets a slot, so a roster that grew since the cache was written
+// (or a player who has never been fetched) still renders as a blank row.
+function initScores(players: Player[], cached: Scores | undefined): Scores {
+  return Object.fromEntries(
+    players.map(p => [p.name, cached?.[p.name] ?? { atp: null, wta: null }])
+  );
 }
 
 migrateLegacyCache();
 
 const scoresByTournament: Record<string, Scores> = Object.fromEntries(
-  TOURNAMENTS.map(t => [t.id, loadCache(t.id)?.scores ?? emptyScores()])
+  TOURNAMENTS.map(t => [t.id, initScores(t.players, loadCache(t.id)?.scores)])
 );
 
 let activeTournamentId =
@@ -47,11 +51,15 @@ if (!TOURNAMENTS.some(t => t.id === activeTournamentId)) {
   activeTournamentId = TOURNAMENTS[TOURNAMENTS.length - 1].id;
 }
 
+function activeTournament(): Tournament {
+  return TOURNAMENTS.find(t => t.id === activeTournamentId)!;
+}
+
 function renderActiveTournament(): void {
-  const tournament = TOURNAMENTS.find(t => t.id === activeTournamentId)!;
+  const tournament = activeTournament();
   applyTheme(tournament);
   renderTabs(TOURNAMENTS, activeTournamentId, switchTournament);
-  renderLeaderboard(PLAYERS, scoresByTournament[activeTournamentId], activeTournamentId);
+  renderLeaderboard(tournament.players, scoresByTournament[tournament.id], tournament.id);
 
   const cache = loadCache(activeTournamentId);
   if (cache) {
@@ -69,27 +77,36 @@ function switchTournament(id: string): void {
   renderActiveTournament();
 }
 
+// Runs tasks with at most `limit` in flight, so we don't burst the proxy.
+async function runPool(tasks: (() => Promise<void>)[], limit: number): Promise<void> {
+  let next = 0;
+  const worker = async () => { while (next < tasks.length) await tasks[next++](); };
+  await Promise.all(Array.from({ length: Math.min(limit, tasks.length) }, worker));
+}
+
 async function refreshStandings(): Promise<void> {
-  const tournamentId = activeTournamentId;
+  const { id: tournamentId, players } = activeTournament();
   setStatus('Fetching standings…');
 
   const scores = scoresByTournament[tournamentId];
-  const fetches = PLAYERS.flatMap(p =>
-    (['atp', 'wta'] as const).map(async draw => {
+  let failed = 0;
+
+  const tasks = players.filter(p => !p.pending).flatMap(p =>
+    (['atp', 'wta'] as const).map(draw => async () => {
       const pts = await fetchPlayerPoints(tournamentId, p.name, draw);
+      if (pts === null) failed++;
       scores[p.name] = { ...scores[p.name], [draw]: pts };
-      renderLeaderboard(PLAYERS, scores, tournamentId);
+      renderLeaderboard(players, scores, tournamentId);
     })
   );
 
-  const results = await Promise.allSettled(fetches);
-  const failed = results.filter(r => r.status === 'rejected').length;
+  await runPool(tasks, FETCH_CONCURRENCY);
 
   saveCache(tournamentId, scores);
   const time = new Date().toLocaleTimeString();
 
   if (failed > 0) {
-    setStatus(`Updated at ${time} (${failed} fetch${failed > 1 ? 'es' : ''} failed)`);
+    setStatus(`Updated at ${time} (${failed} of ${tasks.length} scores unavailable)`);
     showToast('Some scores could not be fetched');
   } else {
     setStatus(`Last updated: ${time}`);
